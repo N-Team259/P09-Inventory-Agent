@@ -1,226 +1,614 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="ar" dir="rtl" class="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>P09 | Smart Inventory Agent</title>
+  <title>P09 | بوابة الدخول ونظام متابعة المخزون - N-Team</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Inter', sans-serif; background-color: #0b0f19; color: #e2e8f0; }
+    body { font-family: 'Cairo', sans-serif; background-color: #070b14; color: #e2e8f0; }
     ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #111827; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
     ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
   </style>
 </head>
 <body class="min-h-screen flex flex-col">
 
-  <!-- Top Navigation -->
-  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-20">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-500/30">
-          P09
-        </div>
-        <div>
-          <h1 class="font-semibold text-white text-base leading-tight">Inventory Copilot</h1>
-          <p class="text-xs text-slate-400">Autonomous Warehouse Management</p>
-        </div>
-      </div>
-      <span class="text-xs text-slate-400 bg-slate-800/80 border border-slate-700/70 px-3 py-1 rounded-full">
-        System Online
-      </span>
-    </div>
-  </header>
-
-  <!-- Main Workspace -->
-  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
-    
-    <!-- Left Column: KPIs + Tables (7 Cols) -->
-    <div class="lg:col-span-7 flex flex-col gap-6">
+  <!-- ===================================================================== -->
+  <!-- الواجهة الصفرية: بوابة تسجيل الدخول وتوجيه الصلاحيات (RBAC Gateway)   -->
+  <!-- ===================================================================== -->
+  <section id="zeroScreen" class="min-h-screen flex items-center justify-center p-4 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-950/40 via-slate-950 to-slate-950">
+    <div class="max-w-4xl w-full grid grid-cols-1 lg:grid-cols-12 bg-slate-900/90 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
       
-      <!-- KPI Cards -->
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
-          <p class="text-xs text-slate-400 font-medium">Warehouses</p>
-          <p id="statWarehouses" class="text-2xl font-bold text-white mt-1">0</p>
+      <!-- القسم الأيمن: نموذج تسجيل الدخول -->
+      <div class="lg:col-span-6 p-7 sm:p-9 flex flex-col justify-center">
+        <div class="flex items-center gap-3 mb-6">
+          <div class="w-11 h-11 rounded-xl bg-indigo-600 flex items-center justify-center font-extrabold text-white text-lg shadow-lg shadow-indigo-600/30">
+            P09
+          </div>
+          <div>
+            <h1 class="font-bold text-white text-lg">بوابة الدخول الذكية (RBAC)</h1>
+            <p class="text-xs text-slate-400">نظام متابعة المخزون والمستلزمات • N-Team</p>
+          </div>
         </div>
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
-          <p class="text-xs text-slate-400 font-medium">Unique Items</p>
-          <p id="statItems" class="text-2xl font-bold text-indigo-400 mt-1">0</p>
-        </div>
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
-          <p class="text-xs text-slate-400 font-medium">Total Stock</p>
-          <p id="statQty" class="text-2xl font-bold text-emerald-400 mt-1">0</p>
-        </div>
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
-          <p class="text-xs text-slate-400 font-medium">Low Stock Alerts</p>
-          <p id="statLow" class="text-2xl font-bold text-rose-400 mt-1">0</p>
+
+        <form id="loginForm" class="space-y-4">
+          <div>
+            <label class="block text-xs text-slate-300 mb-1.5">اسم المستخدم (Username)</label>
+            <input id="loginUser" type="text" required placeholder="مثال: manager أو lab_user"
+              class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:border-indigo-500 focus:outline-none" dir="ltr" />
+          </div>
+          <div>
+            <label class="block text-xs text-slate-300 mb-1.5">كلمة المرور (Password)</label>
+            <input id="loginPass" type="password" required placeholder="••••"
+              class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:border-indigo-500 focus:outline-none" dir="ltr" />
+          </div>
+          <p id="loginError" class="hidden text-xs text-rose-400 bg-rose-950/40 border border-rose-800/60 rounded-lg px-3 py-2"></p>
+          <button type="submit"
+            class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs py-3 rounded-xl shadow-lg shadow-indigo-600/20 transition">
+            تسجيل الدخول والانتقال للواجهة الخاصة ←
+          </button>
+        </form>
+
+        <div class="mt-6 pt-5 border-t border-slate-800 text-[11px] text-slate-400 leading-relaxed">
+          <span class="text-indigo-400 font-bold">معمارية العزل (02-NFR):</span> تتغير واجهة النظام وصلاحيات الاعتماد تلقائياً فور التحقق من هويتك ودورك الوظيفي.
         </div>
       </div>
 
-      <!-- Data Tabs Card -->
-      <div class="bg-slate-900 border border-slate-800 rounded-xl flex-1 flex flex-col overflow-hidden">
-        <div class="border-b border-slate-800 px-4 py-3 flex items-center justify-between flex-wrap gap-2">
-          <div class="flex gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800">
-            <button onclick="switchTab('items')" id="tab-items" class="tab-btn px-3 py-1.5 rounded-md text-xs font-medium bg-indigo-600 text-white">All Items</button>
-            <button onclick="switchTab('low')" id="tab-low" class="tab-btn px-3 py-1.5 rounded-md text-xs font-medium text-slate-400 hover:text-white">Low Stock</button>
-            <button onclick="switchTab('txs')" id="tab-txs" class="tab-btn px-3 py-1.5 rounded-md text-xs font-medium text-slate-400 hover:text-white">Transactions</button>
-            <button onclick="switchTab('warehouses')" id="tab-warehouses" class="tab-btn px-3 py-1.5 rounded-md text-xs font-medium text-slate-400 hover:text-white">Warehouses</button>
+      <!-- القسم الأيسر: بطاقات الدخول السريع لاختبار الأدوار -->
+      <div class="lg:col-span-6 bg-slate-950/80 border-t lg:border-t-0 lg:border-r border-slate-800 p-7 sm:p-9 flex flex-col justify-center space-y-3">
+        <h2 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">حسابات الاختبار المعتمدة (كلمة المرور: 1234)</h2>
+
+        <button onclick="quickLogin('manager', '1234')"
+          class="w-full text-right p-3.5 rounded-xl bg-amber-950/20 hover:bg-amber-950/40 border border-amber-700/50 transition group">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-amber-300">👑 المسؤول المعتمد (Manager)</span>
+            <span class="text-[10px] font-mono bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded">manager</span>
           </div>
-          <button onclick="loadDashboard()" class="text-xs text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg transition">
-            ↻ Refresh
+          <p class="text-[11px] text-slate-400 mt-1">د. منى داود • صلاحية كاملة: رؤية كل الأقسام + اعتماد/رفض القرارات.</p>
+        </button>
+
+        <button onclick="quickLogin('lab_user', '1234')"
+          class="w-full text-right p-3.5 rounded-xl bg-slate-900 hover:bg-slate-800/80 border border-slate-800 transition">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-indigo-300">💻 أمين مختبرات الحاسبات (Operator)</span>
+            <span class="text-[10px] font-mono bg-slate-800 text-slate-300 px-2 py-0.5 rounded">lab_user</span>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1">سجاد عايد • واجهة معزولة لقسم COMP_LABS (استعلام واقتراح فقط).</p>
+        </button>
+
+        <button onclick="quickLogin('cold_user', '1234')"
+          class="w-full text-right p-3.5 rounded-xl bg-slate-900 hover:bg-slate-800/80 border border-slate-800 transition">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-cyan-300">❄️ مسؤولة مخزن التبريد (Operator)</span>
+            <span class="text-[10px] font-mono bg-slate-800 text-slate-300 px-2 py-0.5 rounded">cold_user</span>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1">مريم أمجد • واجهة معزولة لقسم REFRIGERATION (متابعة الصلاحية FEFO).</p>
+        </button>
+
+        <button onclick="quickLogin('ecom_user', '1234')"
+          class="w-full text-right p-3.5 rounded-xl bg-slate-900 hover:bg-slate-800/80 border border-slate-800 transition">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-emerald-300">📦 مسؤولة التجارة الإلكترونية (Operator)</span>
+            <span class="text-[10px] font-mono bg-slate-800 text-slate-300 px-2 py-0.5 rounded">ecom_user</span>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1">آية أمجد • واجهة معزولة لقسم ECOMMERCE (التنبؤ بالمواسم والعروض).</p>
+        </button>
+
+        <button onclick="quickLogin('trade_user', '1234')"
+          class="w-full text-right p-3.5 rounded-xl bg-slate-900 hover:bg-slate-800/80 border border-slate-800 transition">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-purple-300">🏢 أمين التجارة العامة (Operator)</span>
+            <span class="text-[10px] font-mono bg-slate-800 text-slate-300 px-2 py-0.5 rounded">trade_user</span>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1">محمد جابر • واجهة معزولة لقسم GEN_TRADE (استعلام واقتراح فقط).</p>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- بيئة العمل المعزولة بعد تسجيل الدخول (Workspace Shell)                  -->
+  <!-- ===================================================================== -->
+  <div id="workspaceShell" class="hidden min-h-screen flex flex-col">
+
+    <!-- الشريط العلوي -->
+    <header class="border-b border-slate-800 bg-slate-900/95 backdrop-blur sticky top-0 z-30">
+      <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <div id="roleAvatar" class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center font-bold text-white shadow-lg">
+            P09
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h1 id="activeUserName" class="font-bold text-white text-xs sm:text-sm">المستخدم</h1>
+              <span id="activeRoleBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-950 text-indigo-300 border border-indigo-700/50">ROLE</span>
+            </div>
+            <p id="activeUserTitle" class="text-[11px] text-slate-400">الوصف الوظيفي</p>
+          </div>
+        </div>
+
+        <!-- التنقل بين الشاشات الثلاث -->
+        <nav class="flex items-center gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800">
+          <button onclick="switchScreen('chat')" id="nav-chat" class="nav-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white transition">
+            1. المحادثة والتقارير
+          </button>
+          <button onclick="switchScreen('approvals')" id="nav-approvals" class="nav-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition flex items-center gap-1.5">
+            <span id="navApprovalsLabel">2. حالة الطلبات</span>
+            <span id="badgePending" class="bg-amber-500 text-slate-950 text-[10px] font-bold px-1.5 py-0.2 rounded-full">0</span>
+          </button>
+          <button onclick="switchScreen('logs')" id="nav-logs" class="nav-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition">
+            3. سجل العمليات الشفاف
+          </button>
+        </nav>
+
+        <div class="flex items-center gap-2">
+          <a href="/api/export-report" download="P09_Inventory_Report.txt"
+             class="hidden sm:inline-block text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg border border-slate-700 transition">
+            📥 التقرير
+          </a>
+          <button onclick="logout()"
+            class="text-xs bg-rose-950/60 hover:bg-rose-900/70 text-rose-300 border border-rose-800/60 px-3 py-1.5 rounded-lg transition">
+            خروج ↪
           </button>
         </div>
+      </div>
+    </header>
 
-        <div id="tableContainer" class="p-4 overflow-x-auto flex-1 min-h-[360px]">
-          <p class="text-sm text-slate-500 text-center py-12">Loading database...</p>
+    <!-- بطاقات المؤشرات السريعة -->
+    <section class="max-w-7xl w-full mx-auto px-4 pt-5">
+      <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-3.5">
+          <p class="text-[11px] text-slate-400">نطاق الصلاحية</p>
+          <p id="kpiScope" class="text-sm font-bold text-white mt-1">ALL</p>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-3.5">
+          <p class="text-[11px] text-slate-400">المواد ضمن نطاقك</p>
+          <p id="kpiItems" class="text-xl font-bold text-indigo-400 mt-0.5">0</p>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-3.5">
+          <p class="text-[11px] text-slate-400">مواد منخفضة الرصيد</p>
+          <p id="kpiLow" class="text-xl font-bold text-rose-400 mt-0.5">0</p>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-3.5">
+          <p class="text-[11px] text-slate-400">فجوات الجرد</p>
+          <p id="kpiDisc" class="text-xl font-bold text-orange-400 mt-0.5">0</p>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-3.5 col-span-2 sm:col-span-1">
+          <p class="text-[11px] text-slate-400">مسودات معلقة</p>
+          <p id="kpiPending" class="text-xl font-bold text-amber-400 mt-0.5">0</p>
         </div>
       </div>
-    </div>
+    </section>
 
-    <!-- Right Column: AI Copilot Chat (5 Cols) -->
-    <div class="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-xl flex flex-col h-[600px] lg:h-auto">
-      <div class="border-b border-slate-800 px-4 py-3.5 flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-          <h2 class="text-sm font-semibold text-white">AI Inventory Assistant</h2>
+    <!-- الشاشة 1: المحادثة والتقارير -->
+    <main id="screen-chat" class="screen-view flex-1 max-w-7xl w-full mx-auto px-4 py-5 grid grid-cols-1 lg:grid-cols-12 gap-5">
+      <div class="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-xl flex flex-col h-[630px]">
+        <div class="border-b border-slate-800 px-4 py-3 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <h2 class="text-sm font-bold text-white">المساعد الذكي (Ollama Local)</h2>
+          </div>
+          <span id="modelTag" class="text-[10px] font-mono text-emerald-400">qwen2.5</span>
         </div>
-        <span class="text-[11px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded">Gemini 2.5 Flash</span>
+
+        <div class="p-2.5 bg-slate-950/60 border-b border-slate-800 flex flex-wrap gap-1.5">
+          <button onclick="sendScopedPrompt('balance')" class="text-[11px] bg-slate-800 hover:bg-indigo-600/30 border border-slate-700 text-indigo-300 px-2.5 py-1 rounded-lg transition">1. الموازنة والمناقلة</button>
+          <button onclick="sendScopedPrompt('forecast')" class="text-[11px] bg-slate-800 hover:bg-indigo-600/30 border border-slate-700 text-emerald-300 px-2.5 py-1 rounded-lg transition">2. التنبؤ السياقي</button>
+          <button onclick="sendScopedPrompt('audit')" class="text-[11px] bg-slate-800 hover:bg-indigo-600/30 border border-slate-700 text-rose-300 px-2.5 py-1 rounded-lg transition">3. التدقيق الجنائي</button>
+          <button onclick="sendScopedPrompt('fefo')" class="text-[11px] bg-slate-800 hover:bg-indigo-600/30 border border-slate-700 text-amber-300 px-2.5 py-1 rounded-lg transition">4. حارس الصلاحية FEFO</button>
+          <button onclick="sendScopedPrompt('safety')" class="text-[11px] bg-slate-800 hover:bg-indigo-600/30 border border-slate-700 text-cyan-300 px-2.5 py-1 rounded-lg transition">5. التخطيط والسلامة</button>
+        </div>
+
+        <div id="chatBox" class="flex-1 p-4 overflow-y-auto space-y-3.5 text-xs"></div>
+
+        <form id="chatForm" class="p-3 border-t border-slate-800 bg-slate-950/60 flex gap-2">
+          <input id="chatInput" type="text" required placeholder="اكتب طلبك للوكيل الذكي..."
+            class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500" />
+          <button id="sendBtn" type="submit"
+            class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition disabled:opacity-50">
+            إرسال
+          </button>
+        </form>
       </div>
 
-      <!-- Messages Area -->
-      <div id="chatBox" class="flex-1 p-4 overflow-y-auto space-y-4">
-        <div class="flex items-start gap-2.5">
-          <div class="w-7 h-7 rounded-lg bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-xs text-indigo-400 font-bold shrink-0">AI</div>
-          <div class="bg-slate-800/80 border border-slate-700/60 rounded-2xl rounded-tl-none px-3.5 py-2.5 text-xs text-slate-200 leading-relaxed">
-            Database is initialized and clean. Tell me what to do—for example:<br>
-            <span class="text-indigo-300">• "Create Main Warehouse in Samawah"</span><br>
-            <span class="text-indigo-300">• "Add 15 Dell Laptops with SKU DL-01"</span><br>
-            <span class="text-indigo-300">• "Check low stock items"</span>
+      <!-- جدول المخزون المعزول حسب صلاحية المستخدم -->
+      <div class="lg:col-span-7 bg-slate-900 border border-slate-800 rounded-xl flex flex-col h-[630px] overflow-hidden">
+        <div class="border-b border-slate-800 px-4 py-3 flex items-center justify-between flex-wrap gap-2">
+          <div id="deptFilterBar" class="flex gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800"></div>
+          <div class="flex items-center gap-2">
+            <button id="resetBtn" onclick="resetDemo()" class="hidden text-[11px] text-rose-400 hover:underline">↻ تصفير البيانات</button>
+            <button onclick="loadState()" class="text-[11px] text-slate-400 hover:text-white bg-slate-800 px-2.5 py-1 rounded-lg">↻ تحديث</button>
           </div>
         </div>
+
+        <div class="flex-1 overflow-auto p-3">
+          <table class="w-full text-right border-collapse text-xs">
+            <thead class="sticky top-0 bg-slate-900 border-b border-slate-800 text-[11px] text-slate-400">
+              <tr>
+                <th class="py-2 px-2">SKU</th>
+                <th class="py-2 px-2">المادة</th>
+                <th class="py-2 px-2">القسم</th>
+                <th class="py-2 px-2">دفتري</th>
+                <th class="py-2 px-2">فعلي</th>
+                <th class="py-2 px-2">الحد</th>
+                <th class="py-2 px-2">ABC / خطورة</th>
+                <th class="py-2 px-2">الرف</th>
+              </tr>
+            </thead>
+            <tbody id="itemsTableBody" class="divide-y divide-slate-800/60"></tbody>
+          </table>
+        </div>
       </div>
+    </main>
 
-      <!-- Input Area -->
-      <form id="chatForm" class="p-3 border-t border-slate-800 bg-slate-950/50 rounded-b-xl flex gap-2">
-        <input id="chatInput" type="text" required placeholder="Type an inventory command..."
-          class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500" />
-        <button id="sendBtn" type="submit"
-          class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium px-4 py-2.5 rounded-xl transition shadow-lg shadow-indigo-600/20 disabled:opacity-50">
-          Send
-        </button>
-      </form>
-    </div>
+    <!-- الشاشة 2: بوابة الاعتماد / متابعة الطلبات (02-NFR) -->
+    <main id="screen-approvals" class="screen-view hidden flex-1 max-w-7xl w-full mx-auto px-4 py-5 space-y-4">
+      <div id="approvalBanner" class="bg-slate-900 border border-slate-800 rounded-xl p-4"></div>
+      <div id="decisionsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+    </main>
 
-  </main>
+    <!-- الشاشة 3: سجل العمليات الشفاف (05-NFR) -->
+    <main id="screen-logs" class="screen-view hidden flex-1 max-w-7xl w-full mx-auto px-4 py-5">
+      <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
+        <div class="px-4 py-3.5 border-b border-slate-800 flex items-center justify-between">
+          <div>
+            <h2 class="text-sm font-bold text-white">سجل تنفيذ أدوات الوكيل (agent_execution_log • 05-NFR)</h2>
+            <p class="text-[11px] text-slate-400">تتبع كامل لكل أداة استدعاها الوكيل، المدخلات، النتائج، وزمن التنفيذ الفعلي.</p>
+          </div>
+          <button onclick="loadState()" class="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg">↻ تحديث السجل</button>
+        </div>
+        <div class="overflow-x-auto max-h-[600px]">
+          <table class="w-full text-right border-collapse text-xs">
+            <thead class="bg-slate-950 border-b border-slate-800 text-[11px] text-slate-400 sticky top-0">
+              <tr>
+                <th class="py-2.5 px-3">الوقت</th>
+                <th class="py-2.5 px-3">الجلسة</th>
+                <th class="py-2.5 px-3">الدورة</th>
+                <th class="py-2.5 px-3">الأداة المستدعاة</th>
+                <th class="py-2.5 px-3">الحالة</th>
+                <th class="py-2.5 px-3">الزمن (ms)</th>
+                <th class="py-2.5 px-3">المدخلات والمخرجات</th>
+              </tr>
+            </thead>
+            <tbody id="logsTableBody" class="divide-y divide-slate-800/60"></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
 
   <script>
-    let dashboardData = { items: [], low_stock: [], transactions: [], warehouses: [] };
-    let activeTab = 'items';
+    let currentUser = null;
+    let systemState = { items: [], decisions: [], logs: [] };
+    let currentDeptFilter = 'ALL';
 
-    async function loadDashboard() {
-      try {
-        const res = await fetch('/api/dashboard');
-        dashboardData = await res.json();
-
-        document.getElementById('statWarehouses').textContent = dashboardData.stats.warehouses_count;
-        document.getElementById('statItems').textContent = dashboardData.stats.items_count;
-        document.getElementById('statQty').textContent = dashboardData.stats.total_quantity;
-        document.getElementById('statLow').textContent = dashboardData.stats.low_stock_count;
-
-        renderTable();
-      } catch (err) {
-        console.error(err);
-      }
+    function quickLogin(username, password) {
+      document.getElementById('loginUser').value = username;
+      document.getElementById('loginPass').value = password;
+      document.getElementById('loginForm').dispatchEvent(new Event('submit'));
     }
 
-    function switchTab(tab) {
-      activeTab = tab;
-      document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.className = 'tab-btn px-3 py-1.5 rounded-md text-xs font-medium text-slate-400 hover:text-white';
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('loginUser').value;
+      const password = document.getElementById('loginPass').value;
+      const errEl = document.getElementById('loginError');
+      errEl.classList.add('hidden');
+
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
       });
-      document.getElementById(`tab-${tab}`).className = 'tab-btn px-3 py-1.5 rounded-md text-xs font-medium bg-indigo-600 text-white';
-      renderTable();
-    }
+      if (!res.ok) {
+        const err = await res.json();
+        errEl.textContent = err.detail || 'فشل تسجيل الدخول';
+        errEl.classList.remove('hidden');
+        return;
+      }
+      const data = await res.json();
+      enterWorkspace(data.user);
+    });
 
-    function renderTable() {
-      const container = document.getElementById('tableContainer');
-      let rows = [];
-      let headers = [];
+    function enterWorkspace(user) {
+      currentUser = user;
+      const isManager = user.role === 'MANAGER';
 
-      if (activeTab === 'items') {
-        headers = ['ID', 'SKU', 'Name', 'Category', 'Qty', 'Min', 'Warehouse'];
-        rows = dashboardData.items.map(i => [i.id, i.sku || '-', i.name, i.category, i.quantity, i.min_threshold, i.warehouse]);
-      } else if (activeTab === 'low') {
-        headers = ['ID', 'SKU', 'Name', 'Current Qty', 'Min Threshold', 'Warehouse'];
-        rows = dashboardData.low_stock.map(i => [i.id, i.sku || '-', i.name, i.quantity, i.min_threshold, i.warehouse]);
-      } else if (activeTab === 'txs') {
-        headers = ['ID', 'Item', 'Type', 'Qty', 'Notes', 'Time'];
-        rows = dashboardData.transactions.map(t => [t.id, t.item, t.type, t.quantity, t.notes || '-', t.timestamp]);
-      } else if (activeTab === 'warehouses') {
-        headers = ['ID', 'Warehouse Name', 'Location'];
-        rows = dashboardData.warehouses.map(w => [w.id, w.name, w.location || '-']);
+      document.getElementById('zeroScreen').classList.add('hidden');
+      document.getElementById('workspaceShell').classList.remove('hidden');
+
+      document.getElementById('activeUserName').textContent = user.full_name;
+      document.getElementById('activeUserTitle').textContent = user.title;
+      document.getElementById('activeRoleBadge').textContent = isManager ? 'MANAGER • صلاحية اعتماد' : `OPERATOR • ${user.department_scope}`;
+      document.getElementById('activeRoleBadge').className = isManager
+        ? 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-950 text-amber-300 border border-amber-700/60'
+        : 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-950 text-indigo-300 border border-indigo-700/60';
+
+      document.getElementById('roleAvatar').textContent = isManager ? '👑' : '👤';
+      document.getElementById('navApprovalsLabel').textContent = isManager ? '2. اعتماد المسؤول' : '2. مسوداتك المعلقة';
+      document.getElementById('kpiScope').textContent = user.department_scope === 'ALL' ? 'جميع الأقسام (4)' : user.department_scope;
+
+      if (isManager) {
+        document.getElementById('resetBtn').classList.remove('hidden');
+        document.getElementById('approvalBanner').innerHTML = `
+          <div class="flex items-center justify-between flex-wrap gap-2">
+            <div>
+              <h2 class="text-sm font-bold text-amber-300">👑 بوابة الاعتماد البشري مفعّلة (02-NFR)</h2>
+              <p class="text-xs text-slate-400 mt-0.5">بصفتك <b>${user.full_name}</b>، يمكنك اعتماد المسودات لتنفيذها فوراً على قاعدة البيانات أو رفضها.</p>
+            </div>
+            <span class="text-[11px] bg-emerald-950 text-emerald-300 border border-emerald-800 px-3 py-1 rounded-lg">صلاحية التعديل: مفعّلة</span>
+          </div>`;
+      } else {
+        document.getElementById('resetBtn').classList.add('hidden');
+        document.getElementById('approvalBanner').innerHTML = `
+          <div class="flex items-center justify-between flex-wrap gap-2">
+            <div>
+              <h2 class="text-sm font-bold text-indigo-300">🔒 وضع المشاهدة والاقتراح فقط (02-NFR)</h2>
+              <p class="text-xs text-slate-400 mt-0.5">بصفتك <b>${user.full_name}</b>، يمكنك توليد المسودات عبر الوكيل ومتابعة حالتها هنا، بينما تقتصر صلاحية الاعتماد والتنفيذ على <b>المدير المعتمد</b>.</p>
+            </div>
+            <span class="text-[11px] bg-slate-800 text-amber-300 border border-slate-700 px-3 py-1 rounded-lg">صلاحية الاعتماد: مقفلة</span>
+          </div>`;
       }
 
-      if (!rows.length) {
-        container.innerHTML = `<div class="text-center py-16 text-slate-500 text-xs">No records found in this view yet.</div>`;
+      // إعداد شريط الأقسام المعزول
+      const filterBar = document.getElementById('deptFilterBar');
+      if (user.department_scope === 'ALL') {
+        currentDeptFilter = 'ALL';
+        filterBar.innerHTML = `
+          <button onclick="filterDept('ALL')" id="dept-ALL" class="dept-btn px-2.5 py-1 rounded text-[11px] font-semibold bg-indigo-600 text-white">الكل (44)</button>
+          <button onclick="filterDept('GEN_TRADE')" id="dept-GEN_TRADE" class="dept-btn px-2.5 py-1 rounded text-[11px] font-semibold text-slate-400 hover:text-white">التجارة العامة</button>
+          <button onclick="filterDept('ECOMMERCE')" id="dept-ECOMMERCE" class="dept-btn px-2.5 py-1 rounded text-[11px] font-semibold text-slate-400 hover:text-white">التجارة الإلكترونية</button>
+          <button onclick="filterDept('REFRIGERATION')" id="dept-REFRIGERATION" class="dept-btn px-2.5 py-1 rounded text-[11px] font-semibold text-slate-400 hover:text-white">التبريد</button>
+          <button onclick="filterDept('COMP_LABS')" id="dept-COMP_LABS" class="dept-btn px-2.5 py-1 rounded text-[11px] font-semibold text-slate-400 hover:text-white">مختبرات الحاسبات</button>
+        `;
+      } else {
+        currentDeptFilter = user.department_scope;
+        filterBar.innerHTML = `<span class="px-3 py-1 text-[11px] font-bold text-indigo-300">القسم المعزول الخاص بك: ${user.department_scope}</span>`;
+      }
+
+      document.getElementById('chatBox').innerHTML = `
+        <div class="bg-slate-800/80 border border-slate-700/60 rounded-2xl rounded-tr-none p-3.5 text-slate-200 leading-relaxed">
+          أهلاً بك <b>${user.full_name}</b>.<br>
+          تم توجيهك تلقائياً إلى بيئة عملك الخاصة (${user.department_scope === 'ALL' ? 'كافة الأقسام الأربعة' : 'قسم ' + user.department_scope}).<br>
+          <span class="text-amber-300 text-[11px]">${isManager ? 'تملك صلاحية اعتماد وتنفيذ مسودات الوكيل من الشاشة الثانية.' : 'تستطيع طلب التحليلات وتوليد المسودات، وتُرسل تلقائياً للمدير لاعتمادها.'}</span>
+        </div>`;
+
+      switchScreen('chat');
+      loadState();
+    }
+
+    function logout() {
+      currentUser = null;
+      document.getElementById('workspaceShell').classList.add('hidden');
+      document.getElementById('zeroScreen').classList.remove('hidden');
+    }
+
+    function switchScreen(screen) {
+      document.querySelectorAll('.screen-view').forEach(el => el.classList.add('hidden'));
+      document.getElementById(`screen-${screen}`).classList.remove('hidden');
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.className = 'nav-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition flex items-center gap-1.5';
+      });
+      document.getElementById(`nav-${screen}`).className = 'nav-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white transition flex items-center gap-1.5';
+    }
+
+    function filterDept(dept) {
+      currentDeptFilter = dept;
+      document.querySelectorAll('.dept-btn').forEach(btn => {
+        btn.className = 'dept-btn px-2.5 py-1 rounded text-[11px] font-semibold text-slate-400 hover:text-white';
+      });
+      const activeBtn = document.getElementById(`dept-${dept}`);
+      if (activeBtn) activeBtn.className = 'dept-btn px-2.5 py-1 rounded text-[11px] font-semibold bg-indigo-600 text-white';
+      renderItems();
+    }
+
+    async function loadState() {
+      if (!currentUser) return;
+      const res = await fetch('/api/state');
+      systemState = await res.json();
+
+      const scopedItems = currentUser.department_scope === 'ALL'
+        ? systemState.items
+        : systemState.items.filter(i => i.department_code === currentUser.department_scope);
+
+      document.getElementById('modelTag').textContent = systemState.model;
+      document.getElementById('kpiItems').textContent = scopedItems.length;
+      document.getElementById('kpiLow').textContent = scopedItems.filter(i => i.actual_quantity <= i.min_threshold).length;
+      document.getElementById('kpiDisc').textContent = scopedItems.filter(i => i.book_quantity !== i.actual_quantity).length;
+      document.getElementById('kpiPending').textContent = systemState.kpis.pending_approvals;
+      document.getElementById('badgePending').textContent = systemState.kpis.pending_approvals;
+
+      renderItems();
+      renderDecisions();
+      renderLogs();
+    }
+
+    function renderItems() {
+      const tbody = document.getElementById('itemsTableBody');
+      const filtered = currentDeptFilter === 'ALL'
+        ? systemState.items
+        : systemState.items.filter(i => i.department_code === currentDeptFilter);
+
+      tbody.innerHTML = filtered.map(i => {
+        const isLow = i.actual_quantity <= i.min_threshold;
+        const hasGap = i.book_quantity !== i.actual_quantity;
+        return `
+          <tr class="hover:bg-slate-800/40 ${isLow ? 'bg-rose-950/20' : ''}">
+            <td class="py-2 px-2 font-mono text-[11px] text-indigo-300">${i.sku}</td>
+            <td class="py-2 px-2 text-slate-200 font-medium">${i.name}</td>
+            <td class="py-2 px-2 text-[11px] text-slate-400">${i.department_code}</td>
+            <td class="py-2 px-2 ${hasGap ? 'text-orange-400 font-bold' : 'text-slate-300'}">${i.book_quantity}</td>
+            <td class="py-2 px-2 font-bold ${isLow ? 'text-rose-400' : 'text-emerald-400'}">${i.actual_quantity} ${i.unit}</td>
+            <td class="py-2 px-2 text-slate-400">${i.min_threshold}</td>
+            <td class="py-2 px-2 text-[11px]">
+              <span class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">${i.abc_class}</span>
+              ${i.hazard_level !== 'NONE' ? `<span class="px-1.5 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-800/60">${i.hazard_level}</span>` : ''}
+            </td>
+            <td class="py-2 px-2 font-mono text-[11px] text-slate-400">${i.shelf_location}</td>
+          </tr>`;
+      }).join('');
+    }
+
+    function renderDecisions() {
+      const container = document.getElementById('decisionsContainer');
+      const isManager = currentUser && currentUser.role === 'MANAGER';
+
+      if (!systemState.decisions.length) {
+        container.innerHTML = `<div class="col-span-2 text-center py-12 text-slate-500 text-xs bg-slate-900 border border-slate-800 rounded-xl">لا توجد مسودات قرارات حالياً.</div>`;
         return;
       }
 
-      const thead = headers.map(h => `<th class="pb-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 border-b border-slate-800">${h}</th>`).join('');
-      const tbody = rows.map(r => `<tr class="border-b border-slate-800/50 hover:bg-slate-800/30">${r.map(c => `<td class="py-2.5 text-xs text-slate-200">${c}</td>`).join('')}</tr>`).join('');
+      container.innerHTML = systemState.decisions.map(d => {
+        const isPending = d.status === 'PENDING';
+        const badgeColor = d.status === 'APPROVED' ? 'bg-emerald-950 text-emerald-400 border-emerald-800' :
+                           d.status === 'REJECTED' ? 'bg-rose-950 text-rose-400 border-rose-800' :
+                           'bg-amber-950 text-amber-300 border-amber-800';
+        return `
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col justify-between gap-3">
+            <div>
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-[11px] font-mono text-indigo-400">#${d.id} • ${d.decision_type}</span>
+                <span class="text-[11px] px-2 py-0.5 rounded border ${badgeColor}">${d.status}</span>
+              </div>
+              <h3 class="text-sm font-bold text-white mt-1.5">${d.title}</h3>
+              <p class="text-[11px] text-slate-400 mt-0.5">الأداة: <span class="font-mono text-slate-300">${d.source_tool}</span> • ${d.created_at}</p>
+              <pre class="mt-2.5 bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-[11px] text-slate-300 overflow-x-auto" dir="ltr">${JSON.stringify(JSON.parse(d.details_json), null, 2)}</pre>
+            </div>
 
-      container.innerHTML = `<table class="w-full border-collapse"><thead><tr>${thead}</tr></thead><tbody>${tbody}</tbody></table>`;
+            ${isPending ? (isManager ? `
+              <div class="pt-2 border-t border-slate-800 flex items-center gap-2">
+                <button onclick="reviewDecision(${d.id}, 'APPROVED')"
+                  class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold py-2 rounded-lg transition">
+                  ✓ اعتماد وتنفيذ
+                </button>
+                <button onclick="reviewDecision(${d.id}, 'REJECTED')"
+                  class="flex-1 bg-rose-600/80 hover:bg-rose-600 text-white text-xs font-bold py-2 rounded-lg transition">
+                  ✕ رفض المسودة
+                </button>
+              </div>` : `
+              <div class="pt-2 border-t border-slate-800 text-[11px] text-amber-300/90 flex items-center justify-between">
+                <span>⏳ بانتظار اعتماد المدير المعتمد</span>
+                <span class="text-slate-500">02-NFR Locked</span>
+              </div>`) : `
+              <div class="pt-2 border-t border-slate-800 text-[11px] text-slate-400">
+                تمت المراجعة بواسطة: <b class="text-slate-200">${d.reviewed_by}</b> في <span dir="ltr">${d.reviewed_at}</span>
+              </div>`}
+          </div>`;
+      }).join('');
     }
 
-    function appendMessage(role, text) {
-      const chatBox = document.getElementById('chatBox');
+    function renderLogs() {
+      const tbody = document.getElementById('logsTableBody');
+      if (!systemState.logs.length) {
+        tbody.innerHTML = `<tr><td colspan="7" class="py-10 text-center text-slate-500">لا توجد عمليات مسجلة بعد.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = systemState.logs.map(l => `
+        <tr class="hover:bg-slate-800/30 align-top">
+          <td class="py-2.5 px-3 font-mono text-[11px] text-slate-400 whitespace-nowrap" dir="ltr">${l.timestamp}</td>
+          <td class="py-2.5 px-3 font-mono text-[11px] text-indigo-400">${l.session_id}</td>
+          <td class="py-2.5 px-3 text-center">${l.step_number}</td>
+          <td class="py-2.5 px-3 font-mono text-[11px] text-emerald-300" dir="ltr">${l.tool_name}</td>
+          <td class="py-2.5 px-3 text-[11px]"><span class="px-2 py-0.5 rounded bg-slate-800 text-slate-200">${l.status}</span></td>
+          <td class="py-2.5 px-3 font-mono text-[11px] text-amber-300">${l.duration_ms}</td>
+          <td class="py-2.5 px-3 text-[11px] text-slate-300 max-w-md">
+            <div class="font-mono text-[10px] text-slate-400 mb-1" dir="ltr">In: ${l.tool_input}</div>
+            <details>
+              <summary class="cursor-pointer text-indigo-400 hover:underline">عرض المخرجات الموثقة</summary>
+              <pre class="mt-1 bg-slate-950 p-2 rounded text-[10px] overflow-x-auto" dir="ltr">${l.tool_output}</pre>
+            </details>
+          </td>
+        </tr>`).join('');
+    }
+
+    async function reviewDecision(id, action) {
+      const res = await fetch(`/api/decisions/${id}/review`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          reviewer_name: currentUser.full_name,
+          reviewer_role: currentUser.role,
+          action
+        })
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        alert(err.detail || 'غير مصرح لك بهذا الإجراء');
+        return;
+      }
+      await loadState();
+    }
+
+    async function resetDemo() {
+      if (!confirm('إعادة تهيئة قاعدة البيانات بالبيانات الأصلية (44 مادة)؟')) return;
+      await fetch('/api/reset-demo', { method: 'POST' });
+      await loadState();
+    }
+
+    function sendScopedPrompt(type) {
+      const dept = currentUser.department_scope === 'ALL' ? 'COMP_LABS' : currentUser.department_scope;
+      const prompts = {
+        balance: `وازن مخزون قسم ${dept} وأصدر مسودة أمر مناقلة لأي عجز متوفر له فائض في الأقسام الأخرى`,
+        forecast: `تنبأ بالاستهلاك للـ 30 يوم القادمة في قسم ${dept} وفق التقويم والمواسم وأصدر مسودة شراء`,
+        audit: `نفذ تدقيق جنائي لكشف فجوات الجرد والسحوبات الشاذة في قسم ${dept}`,
+        fefo: `افحص تواريخ صلاحية الدفعات وفق FEFO وأصدر محضر إتلاف للمواد المنتهية`,
+        safety: `افحص التخطيط المكاني وقيود السلامة والمواد الخطرة في قسم ${dept}`
+      };
+      document.getElementById('chatInput').value = prompts[type];
+      document.getElementById('chatForm').dispatchEvent(new Event('submit'));
+    }
+
+    function appendChat(role, text, steps = []) {
+      const box = document.getElementById('chatBox');
       const div = document.createElement('div');
       if (role === 'user') {
         div.className = 'flex justify-end';
-        div.innerHTML = `<div class="bg-indigo-600 text-white rounded-2xl rounded-tr-none px-3.5 py-2.5 text-xs max-w-[85%] leading-relaxed">${text}</div>`;
+        div.innerHTML = `<div class="bg-indigo-600 text-white rounded-2xl rounded-tl-none px-3.5 py-2.5 max-w-[85%] leading-relaxed">${text}</div>`;
       } else {
-        div.className = 'flex items-start gap-2.5';
-        div.innerHTML = `
-          <div class="w-7 h-7 rounded-lg bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-xs text-indigo-400 font-bold shrink-0">AI</div>
-          <div class="bg-slate-800/80 border border-slate-700/60 rounded-2xl rounded-tl-none px-3.5 py-2.5 text-xs text-slate-200 leading-relaxed whitespace-pre-wrap">${text}</div>`;
+        const stepsBadge = steps.length
+          ? `<div class="mt-2 pt-2 border-t border-slate-700/60 text-[10px] text-indigo-300 font-mono" dir="ltr">Tools: ${steps.map(s => `${s.tool} (${s.duration_ms}ms)`).join(' -> ')}</div>`
+          : '';
+        div.className = 'flex justify-start';
+        div.innerHTML = `<div class="bg-slate-800/90 border border-slate-700/60 rounded-2xl rounded-tr-none px-3.5 py-2.5 max-w-[92%] text-slate-200 leading-relaxed whitespace-pre-wrap">${text}${stepsBadge}</div>`;
       }
-      chatBox.appendChild(div);
-      chatBox.scrollTop = chatBox.scrollHeight;
+      box.appendChild(div);
+      box.scrollTop = box.scrollHeight;
     }
 
     document.getElementById('chatForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const input = document.getElementById('chatInput');
       const btn = document.getElementById('sendBtn');
-      const message = input.value.trim();
-      if (!message) return;
+      const msg = input.value.trim();
+      if (!msg) return;
 
-      appendMessage('user', message);
+      appendChat('user', msg);
       input.value = '';
       btn.disabled = true;
-      btn.textContent = '...';
+      btn.textContent = 'يعالج...';
 
       try {
         const res = await fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message })
+          body: JSON.stringify({
+            message: msg,
+            user_role: currentUser.role,
+            user_dept: currentUser.department_scope
+          })
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || 'Error communicating with agent');
-        appendMessage('ai', data.reply);
-        await loadDashboard();
+        appendChat('ai', data.reply, data.steps || []);
+        await loadState();
       } catch (err) {
-        appendMessage('ai', '⚠️ ' + err.message);
+        appendChat('ai', '⚠️ خطأ في الاتصال بالخادم المحلي: ' + err.message);
       } finally {
         btn.disabled = false;
-        btn.textContent = 'Send';
+        btn.textContent = 'إرسال';
       }
     });
-
-    loadDashboard();
   </script>
 </body>
 </html>
