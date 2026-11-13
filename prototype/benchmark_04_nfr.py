@@ -39,7 +39,7 @@ def post_json(endpoint, payload):
 
 print("🚀 بدء اختبار الأداء (04-NFR): 20 طلباً متتالياً على RTX 4060...\n")
 login_res = post_json("/api/login", {"username": "manager", "password": "1234"})
-session_id = login_res["session_id"]
+session_id = login_res.get("session_id") or login_res.get("token") or login_res.get("user", {}).get("session_id", "bench_session")
 
 latencies = []
 report_lines = [
