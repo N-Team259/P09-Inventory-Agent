@@ -41,7 +41,8 @@ TOOL_REGISTRY = {
     "safety_and_layout_optimizer": safety_and_layout_optimizer,
 }
 
-SYSTEM_PROMPT = """You are the P09 Autonomous Inventory Tracking Agent for N-Team.
+SYSTEM_PROMPT = """قاعدة لغوية صارمة: يجب أن تكون جميع ردودك باللغة العربية الواضحة حصراً، ويُمنع منعاً باتاً استخدام اللغة الصينية أو أي لغة أخرى.
+You are the P09 Autonomous Inventory Tracking Agent for N-Team.
 You operate strictly offline via local Ollama across 4 departments:
 1. GEN_TRADE (General Trade / التجارة العامة)
 2. ECOMMERCE (E-commerce / التجارة الإلكترونية)
@@ -116,7 +117,7 @@ def run_inventory_agent(user_message: str) -> dict:
                 model=OLLAMA_MODEL,
                 messages=messages,
                 tools=tools_list,
-                options={"temperature": 0.1}
+                options={"temperature": 0.1}, keep_alive="30m"
             )
         except Exception as e:
             err_msg = f"⚠️ تعذر الاتصال بمحرك Ollama المحلي ({OLLAMA_MODEL}): {str(e)}"

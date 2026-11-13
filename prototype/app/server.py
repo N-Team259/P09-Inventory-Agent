@@ -175,7 +175,13 @@ def reset_demo_data():
 def export_report():
     conn = get_connection()
     items = conn.execute("SELECT * FROM items ORDER BY department_code, sku").fetchall()
-    decisions = conn.execute("SELECT * FROM pending_decisions ORDER BY id DESC").fetchall()
+    if dept_scope == "ALL":
+        decisions = conn.execute("SELECT * FROM pending_decisions ORDER BY id DESC").fetchall()
+    else:
+        decisions = conn.execute(
+            "SELECT * FROM pending_decisions WHERE details_json LIKE ? OR title LIKE ? ORDER BY id DESC",
+            (f"%{dept_scope}%", f"%{dept_scope}%")
+        ).fetchall()
     logs = conn.execute("SELECT * FROM agent_execution_log ORDER BY id DESC").fetchall()
     conn.close()
 
